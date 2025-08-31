@@ -94,10 +94,10 @@ def test_save_prank_credentials_valid():
         return False, 0
 
 def test_data_persistence():
-    """Test that data is actually saved to pranked_users.json"""
-    print("\n🧪 Testing data persistence in pranked_users.json")
+    """Test that data is actually saved to pranked_user.json"""
+    print("\n🧪 Testing data persistence in pranked_user.json")
     
-    pranked_users_file = Path("/app/backend/pranked_users.json")
+    pranked_users_file = Path("/app/backend/pranked_user.json")
     
     if not pranked_users_file.exists():
         print("   ❌ pranked_users.json file does not exist")
