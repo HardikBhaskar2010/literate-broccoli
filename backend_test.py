@@ -100,7 +100,7 @@ def test_data_persistence():
     pranked_users_file = Path("/app/backend/pranked_user.json")
     
     if not pranked_users_file.exists():
-        print("   ❌ pranked_users.json file does not exist")
+        print("   ❌ pranked_user.json file does not exist")
         return False
     
     try:
