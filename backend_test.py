@@ -1068,6 +1068,12 @@ def main():
     # NEW: Test GET /api/pranked-credentials endpoint as per review request
     test_results.append(("GET Pranked Credentials Endpoint (Review)", test_get_pranked_credentials_endpoint()))
     
+    # NEW: Test admin-related endpoints as per review request
+    test_results.append(("Admin Export CSV Endpoint", test_admin_export_csv_endpoint()))
+    test_results.append(("Admin Export TXT Endpoint", test_admin_export_txt_endpoint()))
+    test_results.append(("Admin Delete Credential Endpoint", test_admin_delete_credential_endpoint()))
+    test_results.append(("Admin Clear Credentials Endpoint", test_admin_clear_credentials_endpoint()))
+    
     # Run comprehensive pranked_user.json test (covers the review requirements)
     test_results.append(("Pranked User JSON Functionality (Review)", test_pranked_user_json_functionality()))
     
