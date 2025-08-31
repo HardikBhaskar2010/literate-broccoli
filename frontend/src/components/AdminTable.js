@@ -10,12 +10,34 @@ const AdminTable = ({ onExit }) => {
   const fetchData = async () => {
     setLoading(true);
     setError('');
+
+    if (!backendUrl) {
+      setError('Backend URL missing. Please set REACT_APP_BACKEND_URL in frontend/.env and restart frontend.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch(`${backendUrl}/api/pranked-credentials`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`${backendUrl}/api/pranked-credentials`, { signal: controller.signal });
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        let detail = '';
+        try {
+          const maybeJson = await res.json();
+          detail = typeof maybeJson === 'object' ? JSON.stringify(maybeJson) : String(maybeJson);
+        } catch {
+          detail = await res.text();
+        }
+        throw new Error(`HTTP ${res.status} ${res.statusText} ${detail ? '- ' + detail : ''}`);
+      }
+
       const data = await res.json();
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
-      setError('Failed to load credentials');
+      setError(`Failed to load credentials${e?.message ? `: ${e.message}` : ''}`);
     } finally {
       setLoading(false);
     }
