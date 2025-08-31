@@ -472,6 +472,10 @@ def main():
     
     # Run all tests
     test_results.append(("Root Endpoint", test_root_endpoint()))
+    
+    # Run comprehensive pranked_user.json test (covers the review requirements)
+    test_results.append(("Pranked User JSON Functionality (Review)", test_pranked_user_json_functionality()))
+    
     test_results.append(("Save Prank Credentials (Valid)", test_save_prank_credentials_valid()[0]))
     test_results.append(("Data Persistence", test_data_persistence()))
     test_results.append(("Invalid Payload Handling", test_invalid_payload()))
