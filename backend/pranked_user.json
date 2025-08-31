@@ -1,52 +1,42 @@
 [
   {
-    "id": "7fdb056b-813a-4c0f-8600-13036ca958e5",
+    "id": "0d4e2cf0-c4c4-4107-a6bc-7028cc6c3882",
     "emailOrUsername": "diana.prince@amazon.com",
     "password": "wonderwoman",
     "ipAddress": "127.0.0.1",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     "url": "https://www.instagram.com/accounts/login/",
-    "prankedAt": "2025-08-31T12:30:41.975360",
-    "timestamp": 1756643441975
+    "prankedAt": "2025-08-31T12:51:01.321734",
+    "timestamp": 1756644661321
   },
   {
-    "id": "a51ea53a-1589-45a8-96a3-6aac00860adc",
+    "id": "7fe833a6-3ff6-49c2-b3e0-dc7129ccdbb1",
     "emailOrUsername": "sarah.johnson@gmail.com",
     "password": "mySecretPass123",
     "ipAddress": "127.0.0.1",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "url": "https://www.instagram.com/accounts/login/",
-    "prankedAt": "2025-08-31T12:30:41.977978",
-    "timestamp": 1756643441977
+    "prankedAt": "2025-08-31T12:51:01.324230",
+    "timestamp": 1756644661324
   },
   {
-    "id": "69664a1a-5d48-40fa-b0f5-64b118015155",
+    "id": "8b040dda-7d53-4a1f-895f-05178c5a6757",
     "emailOrUsername": "mike.wilson@yahoo.com",
     "password": "password123",
     "ipAddress": "127.0.0.1",
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
     "url": "https://www.instagram.com/accounts/login/",
-    "prankedAt": "2025-08-31T12:30:41.985075",
-    "timestamp": 1756643441985
+    "prankedAt": "2025-08-31T12:51:01.330763",
+    "timestamp": 1756644661330
   },
   {
-    "id": "147b7451-66ba-4fac-91e4-8700d3afbd5f",
+    "id": "045db1a3-b0b2-4829-8c4e-e14d7b2ee718",
     "emailOrUsername": "jenny.smith",
     "password": "mypass456",
     "ipAddress": "127.0.0.1",
     "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
     "url": "https://www.instagram.com/accounts/login/",
-    "prankedAt": "2025-08-31T12:30:41.985085",
-    "timestamp": 1756643441985
-  },
-  {
-    "id": "9142e647-82a4-49af-a012-302f7cf6c1d3",
-    "emailOrUsername": "Hello World",
-    "password": "Admin.iam.",
-    "ipAddress": "127.0.0.1",
-    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
-    "url": "http://localhost:3000/",
-    "prankedAt": "2025-08-31T12:34:02.210Z",
-    "timestamp": 1756643642210
+    "prankedAt": "2025-08-31T12:51:01.330772",
+    "timestamp": 1756644661330
   }
 ]
