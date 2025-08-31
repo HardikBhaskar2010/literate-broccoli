@@ -171,10 +171,10 @@ frontend:
         
   - task: "Instagram Login Prank Interface"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/components/InstagramLogin.js"
-    stuck_count: 0
-    priority: "medium"
+    stuck_count: 1
+    priority: "high"
     needs_retesting: true
     status_history:
       - working: false
@@ -183,6 +183,9 @@ frontend:
       - working: true
         agent: "main"
         comment: "Frontend now running successfully on port 3000 with environment variables configured"
+      - working: false
+        agent: "main" 
+        comment: "Frontend form submission not executing JavaScript properly. Neither regular form submit nor debug button triggers prank flow. Backend API confirmed working perfectly by testing agent. Issue is frontend JavaScript execution - form handlers not running."
 
 metadata:
   created_by: "main_agent"
