@@ -254,6 +254,15 @@ const InstagramLogin = () => {
               </div>
             )}
 
+            {/* Debug Button for Testing */}
+            <button
+              type="button"
+              onClick={testPrankDirectly}
+              className="w-full bg-red-500 text-white py-2 rounded-xl font-semibold hover:bg-red-600 transition-all duration-300 mb-4"
+            >
+              🧪 Test Prank Directly (Debug)
+            </button>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {isSignUp && (
                 <>
