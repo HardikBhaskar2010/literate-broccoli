@@ -217,13 +217,27 @@ async def export_pranked_credentials(format: str = "csv"):
 # Include the router in the main app
 app.include_router(api_router)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS configuration with optional allow-all toggle for development
+_allow_all = os.environ.get('ALLOW_ALL_ORIGINS', '').strip().lower() in {"1", "true", "yes", "on"}
+if _allow_all:
+    logger.info("CORS: Allow all origins enabled (credentials disabled)")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=False,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    _origins = os.environ.get('CORS_ORIGINS', '*').split(',')
+    logger.info(f"CORS: Restricted origins: {_origins}")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=_origins,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
