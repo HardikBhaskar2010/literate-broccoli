@@ -141,7 +141,7 @@ backend:
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "main"
@@ -152,6 +152,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Comprehensive backend API testing completed successfully. All endpoints working: GET /api/ returns Hello World, POST /api/save-prank-credentials saves data correctly to pranked_users.json with proper validation, CORS headers configured correctly for frontend requests. Fixed minor issue with empty JSON file initialization. All 7 test scenarios passed including data persistence, error handling, and multiple entries."
+      - working: true
+        agent: "main"
+        comment: "Updated file path to save credentials into backend/pranked_user.json as per user request. Requires retesting to verify new filename handling and append behavior."
 
 frontend:
   - task: "Frontend Environment Configuration"
