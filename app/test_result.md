@@ -101,3 +101,86 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Fix The Code - Instagram Login Prank App"
+
+backend:
+  - task: "Environment Variables Configuration"
+    implemented: false
+    working: false
+    file: "backend/.env"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Missing .env file with MONGO_URL, DB_NAME, and CORS_ORIGINS variables"
+        
+  - task: "Backend Server Code Fix"
+    implemented: false
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Logger defined after its usage on line 104, causing NameError"
+        
+  - task: "Prank Credentials API Endpoint"
+    implemented: true
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "API endpoint exists but server not running due to environment issues"
+
+frontend:
+  - task: "Frontend Environment Configuration"
+    implemented: false
+    working: false
+    file: "frontend/.env"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Missing .env file with REACT_APP_BACKEND_URL variable"
+        
+  - task: "Instagram Login Prank Interface"
+    implemented: true
+    working: false
+    file: "frontend/src/components/InstagramLogin.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Component exists but cannot connect to backend API due to missing environment variables"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Environment Variables Configuration"
+    - "Backend Server Code Fix"
+    - "Frontend Environment Configuration"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Identified critical issues: missing .env files, logger definition order error, and both services stopped. Will fix environment variables, code issues, and restart services."
