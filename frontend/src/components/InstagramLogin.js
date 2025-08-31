@@ -317,7 +317,12 @@ const InstagramLogin = () => {
 
               <button
                 disabled={loading}
-                type="submit"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('🎯 Button clicked - bypassing form submit');
+                  handleSubmit(e);
+                }}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {loading ? (
