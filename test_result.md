@@ -211,7 +211,7 @@ test_plan:
     - "Prank Credentials API Endpoint"
     - "Instagram Login Prank Interface"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
