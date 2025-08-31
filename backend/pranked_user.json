@@ -38,5 +38,15 @@
     "url": "https://www.instagram.com/accounts/login/",
     "prankedAt": "2025-08-31T12:06:34.894306",
     "timestamp": 1756641994894
+  },
+  {
+    "id": "f2c61b2c-9c0f-444f-8f67-50d2b4807fd3",
+    "emailOrUsername": "test_user_ui_12345@example.com",
+    "password": "superSecret!987",
+    "ipAddress": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+    "url": "http://localhost:3000/",
+    "prankedAt": "2025-08-31T12:14:34.417Z",
+    "timestamp": 1756642474417
   }
 ]
