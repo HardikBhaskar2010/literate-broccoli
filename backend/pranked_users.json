@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": "de9d1541-1dda-4a58-9291-4a818d881c66",
+    "emailOrUsername": "sarah.johnson@gmail.com",
+    "password": "mySecretPass123",
+    "ipAddress": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "url": "https://www.instagram.com/accounts/login/",
+    "prankedAt": "2025-08-31T11:39:33.188177",
+    "timestamp": 1756640373188
+  },
+  {
+    "id": "cfca5b9b-c1a0-4370-9991-d14d52e43c5a",
+    "emailOrUsername": "mike.wilson@yahoo.com",
+    "password": "password123",
+    "ipAddress": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+    "url": "https://www.instagram.com/accounts/login/",
+    "prankedAt": "2025-08-31T11:39:33.196608",
+    "timestamp": 1756640373196
+  },
+  {
+    "id": "81c46eb4-9438-443a-ba41-2784e82c36bf",
+    "emailOrUsername": "jenny.smith",
+    "password": "mypass456",
+    "ipAddress": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+    "url": "https://www.instagram.com/accounts/login/",
+    "prankedAt": "2025-08-31T11:39:33.196634",
+    "timestamp": 1756640373196
+  }
+]
