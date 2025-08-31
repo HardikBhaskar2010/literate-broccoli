@@ -128,7 +128,7 @@ def test_data_persistence():
             return False
             
     except json.JSONDecodeError:
-        print("   ❌ Invalid JSON in pranked_users.json")
+        print("   ❌ Invalid JSON in pranked_user.json")
         return False
     except Exception as e:
         print(f"   ❌ Error reading file: {str(e)}")
