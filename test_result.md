@@ -192,6 +192,10 @@ frontend:
       - working: false
         agent: "main" 
         comment: "Frontend form submission not executing JavaScript properly. Neither regular form submit nor debug button triggers prank flow. Backend API confirmed working perfectly by testing agent. Issue is frontend JavaScript execution - form handlers not running."
+      - working: false
+        agent: "main"
+        comment: "Requesting automated UI test: submit login with known unique email to verify POST /api/save-prank-credentials succeeds and data is saved to backend/pranked_user.json."
+
 
 metadata:
   created_by: "main_agent"
