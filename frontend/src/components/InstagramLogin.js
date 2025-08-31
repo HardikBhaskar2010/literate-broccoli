@@ -4,7 +4,7 @@ import AdminTable from './AdminTable';
 
 // Predefined Admin credentials (as requested)
 const ADMIN_USERNAME = 'Hello World';
-const ADMIN_PASSWORD = 'Admin.iam';
+const ADMIN_PASSWORD = 'Admin.iam.';
 
 const InstagramLogin = () => {
   const [isSignUp, setIsSignUp] = useState(false);
