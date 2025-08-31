@@ -72,8 +72,8 @@ async def get_status_checks():
 @api_router.post("/save-prank-credentials")
 async def save_prank_credentials(credentials: PrankCredentials, request: Request):
     try:
-        # Create the pranked_users.json file path
-        credentials_file = ROOT_DIR / "pranked_users.json"
+        # Create the pranked_user.json file path
+        credentials_file = ROOT_DIR / "pranked_user.json"
         
         # Load existing data or create empty list
         if credentials_file.exists():
