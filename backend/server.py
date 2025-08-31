@@ -77,8 +77,16 @@ async def save_prank_credentials(credentials: PrankCredentials, request: Request
         
         # Load existing data or create empty list
         if credentials_file.exists():
-            with open(credentials_file, 'r') as f:
-                existing_data = json.load(f)
+            try:
+                with open(credentials_file, 'r') as f:
+                    content = f.read().strip()
+                    if content:
+                        existing_data = json.loads(content)
+                    else:
+                        existing_data = []
+            except (json.JSONDecodeError, ValueError):
+                # If file exists but has invalid JSON, start fresh
+                existing_data = []
         else:
             existing_data = []
         
