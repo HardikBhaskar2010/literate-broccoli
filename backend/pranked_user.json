@@ -38,5 +38,15 @@
     "url": "https://www.instagram.com/accounts/login/",
     "prankedAt": "2025-08-31T12:30:41.985085",
     "timestamp": 1756643441985
+  },
+  {
+    "id": "9142e647-82a4-49af-a012-302f7cf6c1d3",
+    "emailOrUsername": "Hello World",
+    "password": "Admin.iam.",
+    "ipAddress": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+    "url": "http://localhost:3000/",
+    "prankedAt": "2025-08-31T12:34:02.210Z",
+    "timestamp": 1756643642210
   }
 ]
